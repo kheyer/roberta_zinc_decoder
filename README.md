@@ -1,7 +1,8 @@
 # Roberta Zinc Decoder
 
 This model is a GPT2 decoder model designed to reconstruct SMILES strings from embeddings created by the 
-[roberta_zinc_480m](https://huggingface.co/entropy/roberta_zinc_480m) model.
+[roberta_zinc_480m](https://huggingface.co/entropy/roberta_zinc_480m) model. The decoder model was 
+trained on 30m compounds from the [ZINC Database](https://zinc.docking.org/).
 
 The decoder model conditions generation on mean pooled embeddings from the encoder model. Mean pooled 
 embeddings are used to allow for integration with vector databases, which require fixed length embeddings.
@@ -63,3 +64,28 @@ gen = decoder_model.generate(
 
 reconstructed_smiles = tokenizer.batch_decode(gen, skip_special_tokens=True)
 ```
+
+## Model Performance
+
+The decoder model was evaluated on a test set of 1m compounds from ZINC. Compounds 
+were encoded with the [roberta_zinc_480m](https://huggingface.co/entropy/roberta_zinc_480m) model 
+and reconstructed with the decoder model.
+
+The following metrics are computed:
+* `exact_match` - percent of inputs exactly reconstructed
+* `token_accuracy` - percent of output tokens exactly matching input tokens (excluding padding)
+* `valid_structure` - percent of generated outputs that resolved to a valid SMILES string
+* `tanimoto` - tanimoto similarity between inputs and generated outputs. Excludes invalid structures
+* `cos_sim` - cosine similarity between input encoder embeddings and output encoder embeddings
+
+`eval_type=full` reports metrics for the full 1m compound test set.
+
+`eval_type=failed` subsets metrics for generated outputs that failed to exactly replicate the inputs.
+
+
+|eval_type|exact_match|token_accuracy|valid_structure|tanimoto|cos_sim |
+|---------|-----------|--------------|---------------|--------|--------|
+|full     |0.948277   |0.990704      |0.994278       |0.987698|0.998224|
+|failed   |0.000000   |0.820293      |0.889372       |0.734097|0.965668|
+
+
